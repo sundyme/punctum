@@ -62,6 +62,38 @@ def head(title, desc, url, image):
 """
 
 
+# Nav switch icons: 7×7 dot matrices in the face's own dot (wght 600, ROND 100 → radius 36.2 % of the pitch).
+# Classes: a always lit; d lit in the dark theme, l in the light one; w the speaker's wave, lit when sound is on.
+# --i staggers the switch-over, column by column for the theme, inner to outer for the wave.
+DISC = ["..###..", ".#####.", "#######", "#######", "#######", ".#####.", "..###.."]
+SPEAKER = ["...#...", "..##.w.", "####..w", "####..w", "####..w", "..##.w.", "...#..."]
+
+
+def _icon(dots):
+    circles = "".join(
+        f'<circle class="{cls}" style="--i:{i}" cx="{5 + 10 * c}" cy="{5 + 10 * r}" r="3.62"/>' for c, r, cls, i in dots)
+    return f'<svg viewBox="0 0 70 70" aria-hidden="true">{circles}</svg>'
+
+
+def icon_theme():
+    """Half the disc lit: the left half in the dark theme, the right half in the light one."""
+    return _icon([(c, r, "a" if c == 3 else "d" if c < 3 else "l", c)
+                  for r, row in enumerate(DISC) for c, ch in enumerate(row) if ch == "#"])
+
+
+def icon_sound():
+    return _icon([(c, r, "w" if ch == "w" else "a", (2 if c == 6 else 1) if ch == "w" else 0)
+                  for r, row in enumerate(SPEAKER) for c, ch in enumerate(row) if ch != "."])
+
+
+# Dark unless the visitor picked light on this site (localStorage p1-theme), set before first paint.
+# The first page is kept as it was and does not get it.
+THEME_BOOT = ('<meta name="theme-color" content="#0A0A09">\n'
+              "<script>(function(){var t='dark';try{t=localStorage.getItem('p1-theme')||'dark'}catch(e){}"
+              "t=t==='light'?'light':'dark';document.documentElement.setAttribute('data-theme',t);"
+              "if(t==='light')document.querySelector('meta[name=theme-color]').content='#E8E8E4'})()</script>\n")
+
+
 def page(src, top):
     """Template files start with <title>; swap it for the full head."""
     assert src.startswith("<title>Punctum</title>")
@@ -71,9 +103,12 @@ def page(src, top):
 bitmaps = json.loads(read("src", "bitmaps.json"))
 woff2 = base64.b64encode(read("fonts", "Punctum-VF.woff2", mode="rb")).decode()
 
-final = read("src", "specimen.template.html").replace("__WOFF2__", woff2).replace("__BITMAPS__", json.dumps(bitmaps, separators=(",", ":")))
+final = read("src", "specimen.template.html").replace("__ICON_THEME__", icon_theme()).replace("__ICON_SOUND__", icon_sound()).replace("__WOFF2__", woff2).replace("__BITMAPS__", json.dumps(bitmaps, separators=(",", ":")))
+left = [k for k in ("__WOFF2__", "__BITMAPS__", "__ICON_THEME__", "__ICON_SOUND__") if k in final]
+if left:
+    raise SystemExit(f"placeholders not filled: {left}")
 write(os.path.join(DOCS, "index.html"),
-      page(final, head("Punctum · 可变点阵字体", DESC, URL, URL + "media/social.png")))
+      page(final, head("Punctum · 可变点阵字体", DESC, URL, URL + "media/social.png") + THEME_BOOT))
 
 BANNER = """<style>
 .v1bar { position: sticky; top: 0; z-index: 99; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px;

@@ -19,10 +19,13 @@
 <meta name="twitter:title" content="Punctum · 可变点阵字体">
 <meta name="twitter:description" content="Punctum, a free variable dot-matrix typeface. 5×7 dots, two axes: dot size and dot shape, round to pixel.">
 <meta name="twitter:image" content="https://sundyme.github.io/punctum/media/social.png">
+<meta name="theme-color" content="#0A0A09">
+<script>(function(){var t='dark';try{t=localStorage.getItem('p1-theme')||'dark'}catch(e){}t=t==='light'?'light':'dark';document.documentElement.setAttribute('data-theme',t);if(t==='light')document.querySelector('meta[name=theme-color]').content='#E8E8E4'})()</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Martian+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Martian+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Martian+Mono:wght@400;500&display=swap"></noscript>
 <style>
 @font-face {
   font-family: "Punctum";
@@ -46,6 +49,7 @@
   --mono: "Martian Mono", ui-monospace, Menlo, monospace;
 
   --gut: clamp(16px, 3.2vw, 48px);
+  --navh: 56px;        /* nav height below the safe area; two rows when the links don't fit on one */
   --t-xs: 0.6875rem; --t-s: 0.8125rem; --t-m: 1rem; --t-l: 1.3125rem; --t-xl: 1.75rem;
   color-scheme: dark;
 }
@@ -63,7 +67,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-padding-top: 72px; }
+html { scroll-padding-top: calc(var(--navh) + 16px); }
 body {
   margin: 0; background: var(--bg); color: var(--on);
   font-family: var(--body); font-size: var(--t-m); line-height: 1.55;
@@ -99,18 +103,51 @@ p { margin: 0; text-wrap: pretty; }
 .nav .wrap { height: 56px; display: flex; align-items: center; gap: 24px; }
 .nav .mark { font-size: 20px; text-decoration: none; padding: 0.1em 0; --w: 600; }
 .nav ul { display: flex; gap: 22px; list-style: none; margin: 0 auto; padding: 0; }
-.nav ul a { text-decoration: none; position: relative; padding: 6px 0 6px 12px; }
+.nav ul a { text-decoration: none; position: relative; padding: 6px 0 6px 12px; white-space: nowrap; }
 .nav ul a::before { content: ""; position: absolute; left: 0; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%; background: var(--off); transition: background .2s; }
 .nav ul a:hover::before { background: var(--dim); }
-.nav ul a[aria-current="true"] { color: var(--on); }
-.nav ul a[aria-current="true"]::before { background: var(--on); }
+.nav ul a[aria-current] { color: var(--on); }
+.nav ul a[aria-current]::before { background: var(--on); }
 .nav .clock { font-size: 20px; padding: 0.1em 0; margin-left: auto; --w: 500; }
-@media (max-width: 1040px) { .nav ul { display: none; } }
+/* mark, links, clock and switches need ≈1100px; below that the links take a second row of their own */
+@media (max-width: 1180px) {
+  :root { --navh: 96px; }
+  .nav .wrap { height: auto; flex-wrap: wrap; row-gap: 0; }
+  .nav .mark, .nav .clock, .nav .tools { height: 56px; display: flex; align-items: center; }
+  .nav ul {
+    order: 3; flex: 1 0 100%; margin: 0; height: 40px; align-items: center; gap: 20px;
+    border-top: 1px solid var(--line); overflow-x: auto; scrollbar-width: none;
+  }
+  .nav ul::-webkit-scrollbar { display: none; }
+}
+/* narrower than the links: they scroll, and fade out at the right edge to say so */
+@media (max-width: 840px) {
+  .nav ul { gap: 16px; padding-right: 24px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+}
+@media (max-width: 400px) { .nav .wrap { column-gap: 14px; } }
+/* theme + sound switches: round like the chips, the icons are 7×7 dot matrices drawn like the face
+   (lit dots in the text colour, unlit dots in the page's unlit-dot colour) */
+.nav .tools { display: flex; align-items: center; gap: 8px; flex: none; }
+.tool {
+  width: 32px; height: 32px; padding: 0; display: grid; place-items: center;
+  color: var(--dim); background: transparent; border: 1px solid var(--line); border-radius: 999px;
+  cursor: pointer; transition: color .15s, border-color .15s;
+}
+.tool:hover { color: var(--on); border-color: var(--dim); }
+.tool svg { width: 20px; height: 20px; display: block; overflow: visible; }
+.tool circle { fill: var(--off); transition: fill .12s calc(var(--i, 0) * 45ms); }
+.tool .a { fill: currentColor; }
+/* theme: half the disc lit; switching wipes column by column like a display redrawing */
+:root:not([data-theme="light"]) #theme .d, :root[data-theme="light"] #theme .l { fill: currentColor; }
+/* sound: a speaker; on lights its wave */
+#sound[aria-pressed="true"] { color: var(--on); }
+#sound[aria-pressed="true"] .w { fill: currentColor; }
+@media (prefers-reduced-motion: reduce) { .tool, .tool * { transition: none !important; } }
 
 /* ── hero ─────────────────────────── */
 .hero { position: relative; height: max(640px, 100svh); overflow: hidden; }
 .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: pan-y; }
-.hero .over { position: absolute; inset: 0; pointer-events: none; padding-top: calc(56px + env(safe-area-inset-top, 0px)); }
+.hero .over { position: absolute; inset: 0; pointer-events: none; padding-top: calc(var(--navh) + env(safe-area-inset-top, 0px)); }
 .hero .over .wrap { height: 100%; display: grid; grid-template-rows: auto 1fr auto; padding-block: 20px 28px; }
 .hero .top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .hero .bottom { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px 48px; align-items: end; }
@@ -177,6 +214,7 @@ section.sec { padding-block: clamp(80px, 11vw, 160px) 0; }
 .pad { display: grid; gap: 12px; align-content: start; }
 .pad canvas { width: 100%; aspect-ratio: 9 / 6.4; display: block; cursor: grab; touch-action: none; border: 1px solid var(--line); }
 .pad canvas:active { cursor: grabbing; }
+@media (pointer: coarse) { .pad canvas { touch-action: pan-y; } }   /* on phones a vertical swipe still scrolls the page */
 .pad .ax { display: flex; justify-content: space-between; }
 .spec { display: grid; grid-template-rows: 1fr auto; gap: 16px; min-width: 0; border: 1px solid var(--line); padding: 20px; }
 .spec .word { overflow: hidden; align-self: center; padding: 0.1em 0; }
@@ -193,8 +231,10 @@ section.sec { padding-block: clamp(80px, 11vw, 160px) 0; }
 /* ── glyphs ─────────────────────────── */
 .glyphs .grid2 { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 32px var(--gut); align-items: start; }
 @media (max-width: 900px) { .glyphs .grid2 { grid-template-columns: 1fr; } }
-.insp { position: sticky; top: 88px; display: grid; gap: 14px; }
+.insp { position: sticky; top: calc(var(--navh) + 32px); display: grid; gap: 14px; }
 @media (max-width: 900px) { .insp { position: static; grid-template-columns: 160px minmax(0, 1fr); align-items: start; } }
+@media (max-width: 400px) { .insp { grid-template-columns: 112px minmax(0, 1fr); gap: 12px; } }
+@media (max-height: 800px) { .insp { position: static; } }   /* too tall to stick on short screens */
 .insp canvas { width: 100%; aspect-ratio: 7 / 11; display: block; border: 1px solid var(--line); }
 .insp dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-family: var(--mono); font-size: var(--t-xs); letter-spacing: .04em; }
 .insp dt { color: var(--dim); text-transform: uppercase; }
@@ -241,6 +281,7 @@ input[type=range]::-moz-range-thumb { width: 13px; height: 13px; border: 0; bord
   color: var(--on); background-color: transparent; padding: 0.2em 0; margin: 0; background-attachment: local;
   white-space: pre-wrap; overflow-wrap: anywhere; outline: none;
 }
+#t-area:focus-visible { outline: 1px solid var(--on); outline-offset: 4px; }
 .tfoot { display: flex; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
 .css-out { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; min-width: 0; }
 .css-out code { font-family: var(--mono); font-size: var(--t-xs); color: var(--on); overflow-x: auto; max-width: 100%; white-space: nowrap; }
@@ -278,6 +319,7 @@ table.t { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-
 .list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: var(--t-s); }
 .list li code { font-family: var(--mono); font-size: var(--t-xs); overflow-wrap: anywhere; }
 .list li span { color: var(--dim); text-align: right; }
+@media (max-width: 560px) { .list li { grid-template-columns: 1fr; gap: 2px; } .list li span { text-align: left; } }
 .side h3 { margin: 0 0 8px; font-family: var(--mono); font-size: var(--t-xs); font-weight: 400; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
 
 /* ── footer ─────────────────────────── */
@@ -303,7 +345,7 @@ footer .row a:hover { color: var(--on); }
 <nav class="nav" aria-label="页面导航">
   <div class="wrap">
     <a class="mark lat" href="#top" data-lat>PUNCTUM</a>
-    <ul>
+    <ul lang="en">
       <li><a class="label" href="#idea">Idea</a></li>
       <li><a class="label" href="#system">System</a></li>
       <li><a class="label" href="#axes">Axes</a></li>
@@ -315,13 +357,17 @@ footer .row a:hover { color: var(--on); }
       <li><a class="label" href="#info">Info</a></li>
       <li><a class="label" href="https://github.com/sundyme/punctum">GitHub ↗</a></li>
     </ul>
-    <span class="clock lat" id="clock" data-lat aria-label="本地时间"><span class="ln">00:00:00</span></span>
+    <span class="clock lat" id="clock" data-lat role="timer" aria-label="本地时间"><span class="ln">00:00:00</span></span>
+    <div class="tools">
+      <button class="tool" type="button" id="theme" aria-label="切换到浅色" title="切换到浅色"><svg viewBox="0 0 70 70" aria-hidden="true"><circle class="d" style="--i:2" cx="25" cy="5" r="3.62"/><circle class="a" style="--i:3" cx="35" cy="5" r="3.62"/><circle class="l" style="--i:4" cx="45" cy="5" r="3.62"/><circle class="d" style="--i:1" cx="15" cy="15" r="3.62"/><circle class="d" style="--i:2" cx="25" cy="15" r="3.62"/><circle class="a" style="--i:3" cx="35" cy="15" r="3.62"/><circle class="l" style="--i:4" cx="45" cy="15" r="3.62"/><circle class="l" style="--i:5" cx="55" cy="15" r="3.62"/><circle class="d" style="--i:0" cx="5" cy="25" r="3.62"/><circle class="d" style="--i:1" cx="15" cy="25" r="3.62"/><circle class="d" style="--i:2" cx="25" cy="25" r="3.62"/><circle class="a" style="--i:3" cx="35" cy="25" r="3.62"/><circle class="l" style="--i:4" cx="45" cy="25" r="3.62"/><circle class="l" style="--i:5" cx="55" cy="25" r="3.62"/><circle class="l" style="--i:6" cx="65" cy="25" r="3.62"/><circle class="d" style="--i:0" cx="5" cy="35" r="3.62"/><circle class="d" style="--i:1" cx="15" cy="35" r="3.62"/><circle class="d" style="--i:2" cx="25" cy="35" r="3.62"/><circle class="a" style="--i:3" cx="35" cy="35" r="3.62"/><circle class="l" style="--i:4" cx="45" cy="35" r="3.62"/><circle class="l" style="--i:5" cx="55" cy="35" r="3.62"/><circle class="l" style="--i:6" cx="65" cy="35" r="3.62"/><circle class="d" style="--i:0" cx="5" cy="45" r="3.62"/><circle class="d" style="--i:1" cx="15" cy="45" r="3.62"/><circle class="d" style="--i:2" cx="25" cy="45" r="3.62"/><circle class="a" style="--i:3" cx="35" cy="45" r="3.62"/><circle class="l" style="--i:4" cx="45" cy="45" r="3.62"/><circle class="l" style="--i:5" cx="55" cy="45" r="3.62"/><circle class="l" style="--i:6" cx="65" cy="45" r="3.62"/><circle class="d" style="--i:1" cx="15" cy="55" r="3.62"/><circle class="d" style="--i:2" cx="25" cy="55" r="3.62"/><circle class="a" style="--i:3" cx="35" cy="55" r="3.62"/><circle class="l" style="--i:4" cx="45" cy="55" r="3.62"/><circle class="l" style="--i:5" cx="55" cy="55" r="3.62"/><circle class="d" style="--i:2" cx="25" cy="65" r="3.62"/><circle class="a" style="--i:3" cx="35" cy="65" r="3.62"/><circle class="l" style="--i:4" cx="45" cy="65" r="3.62"/></svg></button>
+      <button class="tool" type="button" id="sound" aria-pressed="false" aria-label="音效" title="打开音效"><svg viewBox="0 0 70 70" aria-hidden="true"><circle class="a" style="--i:0" cx="35" cy="5" r="3.62"/><circle class="a" style="--i:0" cx="25" cy="15" r="3.62"/><circle class="a" style="--i:0" cx="35" cy="15" r="3.62"/><circle class="w" style="--i:1" cx="55" cy="15" r="3.62"/><circle class="a" style="--i:0" cx="5" cy="25" r="3.62"/><circle class="a" style="--i:0" cx="15" cy="25" r="3.62"/><circle class="a" style="--i:0" cx="25" cy="25" r="3.62"/><circle class="a" style="--i:0" cx="35" cy="25" r="3.62"/><circle class="w" style="--i:2" cx="65" cy="25" r="3.62"/><circle class="a" style="--i:0" cx="5" cy="35" r="3.62"/><circle class="a" style="--i:0" cx="15" cy="35" r="3.62"/><circle class="a" style="--i:0" cx="25" cy="35" r="3.62"/><circle class="a" style="--i:0" cx="35" cy="35" r="3.62"/><circle class="w" style="--i:2" cx="65" cy="35" r="3.62"/><circle class="a" style="--i:0" cx="5" cy="45" r="3.62"/><circle class="a" style="--i:0" cx="15" cy="45" r="3.62"/><circle class="a" style="--i:0" cx="25" cy="45" r="3.62"/><circle class="a" style="--i:0" cx="35" cy="45" r="3.62"/><circle class="w" style="--i:2" cx="65" cy="45" r="3.62"/><circle class="a" style="--i:0" cx="25" cy="55" r="3.62"/><circle class="a" style="--i:0" cx="35" cy="55" r="3.62"/><circle class="w" style="--i:1" cx="55" cy="55" r="3.62"/><circle class="a" style="--i:0" cx="35" cy="65" r="3.62"/></svg></button>
+    </div>
   </div>
 </nav>
 
 <header class="hero" id="top">
-  <h1 class="sr">Punctum, a variable dot-matrix typeface</h1>
-  <canvas id="hero" aria-label="由点阵组成的 PUNCTUM 字样。移动指针，镜头下的点会变大并变成方形像素。"></canvas>
+  <h1 class="sr" lang="en">Punctum, a variable dot-matrix typeface</h1>
+  <canvas id="hero" role="img" aria-label="由点阵组成的 PUNCTUM 字样。移动指针，镜头下的点会变大并变成方形像素。"></canvas>
   <div class="over">
     <div class="wrap">
       <div class="top">
@@ -391,7 +437,8 @@ footer .row a:hover { color: var(--on); }
     </div>
     <div class="grid2">
       <div class="pad">
-        <canvas id="pad" tabindex="0" role="application" aria-label="设计空间。拖动，或用方向键调整：左右改字重，上下改圆度。"></canvas>
+        <canvas id="pad" tabindex="0" role="application" aria-label="设计空间。拖动，或用方向键调整：左右改字重，上下改圆度。" aria-describedby="pad-sr"></canvas>
+        <span class="sr" id="pad-sr" aria-live="polite"></span>
         <div class="ax"><span class="label">wght 100</span><span class="label">← Size →</span><span class="label">wght 900</span></div>
         <div class="chips" role="group" aria-label="命名实例" id="ax-chips">
           <button class="chip" type="button" data-w="100" data-r="100">Thin</button>
@@ -421,7 +468,7 @@ footer .row a:hover { color: var(--on); }
     </div>
     <div class="grid2">
       <div class="insp">
-        <canvas id="insp" aria-label="所选字符的点阵结构"></canvas>
+        <canvas id="insp" role="img" aria-label="所选字符的点阵结构"></canvas>
         <dl>
           <dt>Glyph</dt><dd id="i-ch">g</dd>
           <dt>Unicode</dt><dd id="i-cp">U+0067</dd>
@@ -440,7 +487,7 @@ footer .row a:hover { color: var(--on); }
             <button class="chip" type="button" data-f="punct">Punctuation</button>
             <button class="chip" type="button" data-f="sign">Signage</button>
           </div>
-          <span class="label" id="g-count">108 shown</span>
+          <span class="label" id="g-count">106 shown</span>
         </div>
         <div class="gset lat" id="gset" data-lat role="group" aria-label="字符"></div>
       </div>
@@ -456,17 +503,17 @@ footer .row a:hover { color: var(--on); }
       <p class="lede">一块由 Punctum 驱动的显示屏。每个字位像翻牌一样滚过一圈字符，再停在目标上，从左上到右下错开出发。世界时钟每分钟只翻动变化的字位。点一下屏幕，全部重翻。</p>
     </div>
   </div>
-  <div class="board" id="boardbox" title="点击重翻">
+  <div class="board" id="boardbox" title="点击重翻" tabindex="0" role="button" aria-label="重翻屏幕">
     <div class="face lat" id="face" data-fitboard aria-live="off"></div>
   </div>
   <div class="wrap">
     <div class="board-ctl">
-      <input class="field" id="board-msg" type="text" maxlength="120" placeholder="输入一句话，按回车显示在屏上" aria-label="屏幕文字">
+      <input class="field" id="board-msg" type="text" maxlength="120" placeholder="输入英文、数字或符号，按回车显示在屏上" aria-label="屏幕文字">
       <div class="chips" role="group" aria-label="屏幕内容" id="b-modes">
         <button class="chip" type="button" data-m="clock" aria-pressed="true">World clock</button>
         <button class="chip" type="button" data-m="dep">Departures</button>
         <button class="chip" type="button" data-m="msg">Message</button>
-        <button class="chip" type="button" id="b-sound" aria-pressed="false">Sound off</button>
+        <button class="chip" type="button" id="b-sound" aria-pressed="false">Sound</button>
       </div>
     </div>
   </div>
@@ -483,7 +530,7 @@ footer .row a:hover { color: var(--on); }
       <div class="rng"><label class="label" for="t-w">wght <output id="o-w">400</output></label><input id="t-w" type="range" min="100" max="900" value="400"></div>
       <div class="rng"><label class="label" for="t-r">ROND <output id="o-r">100</output></label><input id="t-r" type="range" min="0" max="100" value="100"></div>
       <div class="rng"><label class="label" for="t-s">Size <output id="o-s">90px</output></label><input id="t-s" type="range" min="20" max="200" step="10" value="90"></div>
-      <div class="chips" role="group" aria-label="底纹"><button class="chip" type="button" id="t-lat" aria-pressed="true">Lattice on</button></div>
+      <div class="chips" role="group" aria-label="底纹"><button class="chip" type="button" id="t-lat" aria-pressed="true">Lattice</button></div>
     </div>
     <textarea id="t-area" class="lat" spellcheck="false" rows="3" aria-label="试排文本">PLATFORM 7 → ZURICH HB
 Departs 08:42, on time.</textarea>
@@ -566,7 +613,7 @@ Departs 08:42, on time.</textarea>
           <tr><th>Line</th><td class="v">800 / −200</td><td class="d">行距为 0 时点阵上下连续</td></tr>
           <tr><th>Cap · Ascender</th><td class="v">700</td><td class="d">7 个点</td></tr>
           <tr><th>x-height</th><td class="v">500</td><td class="d">5 个点</td></tr>
-          <tr><th>Descender</th><td class="v">−200</td><td class="d">2 个点：g j p q y , ; _</td></tr>
+          <tr><th>Descender</th><td class="v">−200</td><td class="d">2 个点：g j p q y , ; _ |</td></tr>
           <tr><th>wght</th><td class="v">100–900</td><td class="d">点直径 24 → 100，Black 时点与点相接</td></tr>
           <tr><th>ROND</th><td class="v">0–100</td><td class="d">0 方形像素，100 圆点（默认）</td></tr>
           <tr><th>Named styles</th><td class="v">18</td><td class="d">Thin–Black 九个字重 × Round / Pixel</td></tr>
@@ -577,7 +624,7 @@ Departs 08:42, on time.</textarea>
         <div>
           <h3>Download · 下载</h3>
           <ul class="list">
-            <li><a href="https://github.com/sundyme/punctum/releases/latest/download/Punctum.zip"><code>Punctum.zip</code></a><span>可变字体、10 个静态字重、网页字体</span></li>
+            <li><a href="https://github.com/sundyme/punctum/releases/latest/download/Punctum.zip"><code>Punctum.zip</code></a><span>可变字体、10 个静态字体（5 个字重 × 圆点 / 像素）、网页字体</span></li>
             <li><a href="https://github.com/sundyme/punctum"><code>github.com/sundyme/punctum</code></a><span>源文件与构建脚本</span></li>
             <li><code>src/glyphs.py</code><span>点阵源数据，改这里重新构建</span></li>
           </ul>
@@ -618,7 +665,9 @@ Departs 08:42, on time.</textarea>
 
 <script>
 const BITMAPS = {"A":[".###.","#...#","#...#","#####","#...#","#...#","#...#",".....","....."],"B":["####.","#...#","#...#","####.","#...#","#...#","####.",".....","....."],"C":[".###.","#...#","#....","#....","#....","#...#",".###.",".....","....."],"D":["####.","#...#","#...#","#...#","#...#","#...#","####.",".....","....."],"E":["#####","#....","#....","####.","#....","#....","#####",".....","....."],"F":["#####","#....","#....","####.","#....","#....","#....",".....","....."],"G":[".###.","#...#","#....","#.###","#...#","#...#",".###.",".....","....."],"H":["#...#","#...#","#...#","#####","#...#","#...#","#...#",".....","....."],"I":[".###.","..#..","..#..","..#..","..#..","..#..",".###.",".....","....."],"J":["....#","....#","....#","....#","....#","#...#",".###.",".....","....."],"K":["#...#","#..#.","#.#..","##...","#.#..","#..#.","#...#",".....","....."],"L":["#....","#....","#....","#....","#....","#....","#####",".....","....."],"M":["#...#","##.##","#.#.#","#.#.#","#...#","#...#","#...#",".....","....."],"N":["#...#","#...#","##..#","#.#.#","#..##","#...#","#...#",".....","....."],"O":[".###.","#...#","#...#","#...#","#...#","#...#",".###.",".....","....."],"P":["####.","#...#","#...#","####.","#....","#....","#....",".....","....."],"Q":[".###.","#...#","#...#","#...#","#.#.#","#..#.",".##.#",".....","....."],"R":["####.","#...#","#...#","####.","#.#..","#..#.","#...#",".....","....."],"S":[".###.","#...#","#....",".###.","....#","#...#",".###.",".....","....."],"T":["#####","..#..","..#..","..#..","..#..","..#..","..#..",".....","....."],"U":["#...#","#...#","#...#","#...#","#...#","#...#",".###.",".....","....."],"V":["#...#","#...#","#...#","#...#","#...#",".#.#.","..#..",".....","....."],"W":["#...#","#...#","#...#","#.#.#","#.#.#","#.#.#",".#.#.",".....","....."],"X":["#...#","#...#",".#.#.","..#..",".#.#.","#...#","#...#",".....","....."],"Y":["#...#","#...#",".#.#.","..#..","..#..","..#..","..#..",".....","....."],"Z":["#####","....#","...#.","..#..",".#...","#....","#####",".....","....."],"a":[".....",".....",".###.","....#",".####","#...#",".####",".....","....."],"b":["#....","#....","####.","#...#","#...#","#...#","####.",".....","....."],"c":[".....",".....",".###.","#...#","#....","#...#",".###.",".....","....."],"d":["....#","....#",".####","#...#","#...#","#...#",".####",".....","....."],"e":[".....",".....",".###.","#...#","#####","#....",".###.",".....","....."],"f":["...##","..#..",".###.","..#..","..#..","..#..","..#..",".....","....."],"g":[".....",".....",".####","#...#","#...#","#...#",".####","....#",".###."],"h":["#....","#....","####.","#...#","#...#","#...#","#...#",".....","....."],"i":["..#..",".....",".##..","..#..","..#..","..#..",".###.",".....","....."],"j":["...#.",".....","..##.","...#.","...#.","...#.","...#.","#..#.",".##.."],"k":["#....","#....","#..#.","#.#..","##...","#.#..","#..#.",".....","....."],"l":[".##..","..#..","..#..","..#..","..#..","..#..",".###.",".....","....."],"m":[".....",".....","##.#.","#.#.#","#.#.#","#.#.#","#.#.#",".....","....."],"n":[".....",".....","####.","#...#","#...#","#...#","#...#",".....","....."],"o":[".....",".....",".###.","#...#","#...#","#...#",".###.",".....","....."],"p":[".....",".....","####.","#...#","#...#","#...#","####.","#....","#...."],"q":[".....",".....",".####","#...#","#...#","#...#",".####","....#","....#"],"r":[".....",".....","#.##.","##..#","#....","#....","#....",".....","....."],"s":[".....",".....",".####","#....",".###.","....#","####.",".....","....."],"t":[".#...",".#...","####.",".#...",".#...",".#..#","..##.",".....","....."],"u":[".....",".....","#...#","#...#","#...#","#...#",".####",".....","....."],"v":[".....",".....","#...#","#...#","#...#",".#.#.","..#..",".....","....."],"w":[".....",".....","#...#","#...#","#.#.#","#.#.#",".#.#.",".....","....."],"x":[".....",".....","#...#",".#.#.","..#..",".#.#.","#...#",".....","....."],"y":[".....",".....","#...#","#...#","#...#","#...#",".####","....#",".###."],"z":[".....",".....","#####","...#.","..#..",".#...","#####",".....","....."],"0":[".###.","#...#","#..##","#.#.#","##..#","#...#",".###.",".....","....."],"1":["..#..",".##..","..#..","..#..","..#..","..#..",".###.",".....","....."],"2":[".###.","#...#","....#","...#.","..#..",".#...","#####",".....","....."],"3":[".###.","#...#","....#","..##.","....#","#...#",".###.",".....","....."],"4":["...#.","..##.",".#.#.","#..#.","#####","...#.","...#.",".....","....."],"5":["#####","#....","####.","....#","....#","#...#",".###.",".....","....."],"6":["..##.",".#...","#....","####.","#...#","#...#",".###.",".....","....."],"7":["#####","....#","...#.","..#..","..#..","..#..","..#..",".....","....."],"8":[".###.","#...#","#...#",".###.","#...#","#...#",".###.",".....","....."],"9":[".###.","#...#","#...#",".####","....#","...#.",".##..",".....","....."]," ":[".....",".....",".....",".....",".....",".....",".....",".....","....."],"!":["..#..","..#..","..#..","..#..","..#..",".....","..#..",".....","....."],"\"":[".#.#.",".#.#.",".....",".....",".....",".....",".....",".....","....."],"#":[".#.#.",".#.#.","#####",".#.#.","#####",".#.#.",".#.#.",".....","....."],"$":["..#..",".####","#.#..",".###.","..#.#","####.","..#..",".....","....."],"%":["##...","##..#","...#.","..#..",".#...","#..##","...##",".....","....."],"&":[".##..","#..#.","#.#..",".#...","#.#.#","#..#.",".##.#",".....","....."],"'":["..#..","..#..",".....",".....",".....",".....",".....",".....","....."],"(":["...#.","..#..",".#...",".#...",".#...","..#..","...#.",".....","....."],")":[".#...","..#..","...#.","...#.","...#.","..#..",".#...",".....","....."],"*":[".....","..#..","#.#.#",".###.","#.#.#","..#..",".....",".....","....."],"+":[".....","..#..","..#..","#####","..#..","..#..",".....",".....","....."],",":[".....",".....",".....",".....",".....",".....","..#..",".#...","....."],"-":[".....",".....",".....",".###.",".....",".....",".....",".....","....."],".":[".....",".....",".....",".....",".....",".....","..#..",".....","....."],"/":["....#","...#.","...#.","..#..",".#...",".#...","#....",".....","....."],":":[".....",".....","..#..",".....",".....",".....","..#..",".....","....."],";":[".....",".....","..#..",".....",".....",".....","..#..",".#...","....."],"<":["....#","...#.","..#..",".#...","..#..","...#.","....#",".....","....."],"=":[".....",".....","#####",".....","#####",".....",".....",".....","....."],">":["#....",".#...","..#..","...#.","..#..",".#...","#....",".....","....."],"?":[".###.","#...#","....#","...#.","..#..",".....","..#..",".....","....."],"@":[".###.","#...#","#.###","#.#.#","#.###","#....",".###.",".....","....."],"[":[".###.",".#...",".#...",".#...",".#...",".#...",".###.",".....","....."],"\\":["#....",".#...",".#...","..#..","...#.","...#.","....#",".....","....."],"]":[".###.","...#.","...#.","...#.","...#.","...#.",".###.",".....","....."],"^":["..#..",".#.#.","#...#",".....",".....",".....",".....",".....","....."],"_":[".....",".....",".....",".....",".....",".....",".....","#####","....."],"`":[".#...","..#..",".....",".....",".....",".....",".....",".....","....."],"{":["...##","..#..","..#..",".#...","..#..","..#..","...##",".....","....."],"|":["..#..","..#..","..#..","..#..","..#..","..#..","..#..","..#..","....."],"}":["##...","..#..","..#..","...#.","..#..","..#..","##...",".....","....."],"~":[".....",".....",".#...","#.#.#","...#.",".....",".....",".....","....."],"\u00a0":[".....",".....",".....",".....",".....",".....",".....",".....","....."],"\u00b0":[".##..","#..#.",".##..",".....",".....",".....",".....",".....","....."],"\u00b7":[".....",".....",".....","..#..",".....",".....",".....",".....","....."],"\u2022":[".....",".....",".###.",".###.",".###.",".....",".....",".....","....."],"\u2026":[".....",".....",".....",".....",".....",".....","#.#.#",".....","....."],"\u00d7":[".....","#...#",".#.#.","..#..",".#.#.","#...#",".....",".....","....."],"\u2014":[".....",".....",".....","#####",".....",".....",".....",".....","....."],"\u2192":[".....","..#..","...#.","#####","...#.","..#..",".....",".....","....."],"\u2190":[".....","..#..",".#...","#####",".#...","..#..",".....",".....","....."],"\u2191":["..#..",".###.","#.#.#","..#..","..#..","..#..","..#..",".....","....."],"\u2193":["..#..","..#..","..#..","..#..","#.#.#",".###.","..#..",".....","....."],"\u2665":[".....",".#.#.","#####","#####",".###.","..#..",".....",".....","....."],"\u25a0":["#####","#####","#####","#####","#####","#####","#####",".....","....."]};
-const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reduceQ = matchMedia("(prefers-reduced-motion: reduce)");
+let reduce = reduceQ.matches;
+reduceQ.addEventListener?.("change", (e) => { reduce = e.matches; });
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const lerp = (a, b, t) => a + (b - a) * t, clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const tok = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -671,17 +720,73 @@ function drumSeq(target, steps) {
   return seq;
 }
 const flapJobs = new Set();
-let audio = null, soundOn = false, lastClick = 0;
-function click(n) {
-  if (!soundOn || !audio) return;
-  const t = audio.currentTime; if (t - lastClick < 0.028) return; lastClick = t;
+
+/* ── sound: off until the visitor turns it on (header #sound or the board's chip), remembered as p1-sound.
+   The page's own split-flaps click; controls beep like a display panel. Round dots beep as a sine,
+   square pixels as a square wave, so ROND 100 → 0 is also the timbre. ── */
+const store = {
+  get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
+};
+let audio = null, bus = null, soundOn = store.get("p1-sound") === "on", lastClick = 0;
+const hz = (k) => 523.25 * Math.pow(2, (12 * Math.floor(k / 5) + [0, 2, 4, 7, 9][((k % 5) + 5) % 5]) / 12); // k-th pentatonic step above C5
+const limiter = (ms) => { let t0 = 0; return () => { const t = performance.now(); if (t - t0 < ms) return false; t0 = t; return true; }; };
+function ear() {
+  if (!audio) {
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return null;   // no sound before the first gesture
+    try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+    bus = audio.createGain(); bus.gain.value = 0.6;
+    const lp = audio.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 7000;
+    const comp = audio.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4;
+    bus.connect(lp).connect(comp).connect(audio.destination);
+  }
+  if (audio.state !== "running") { const p = audio.resume && audio.resume(); if (p && p.catch) p.catch(() => {}); }
+  return audio;
+}
+/* one flap: a 12 ms noise burst through a band-pass */
+function flapNoise(t, gain) {
   const len = 0.012, buf = audio.createBuffer(1, Math.ceil(audio.sampleRate * len), audio.sampleRate), d = buf.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
   const src = audio.createBufferSource(), f = audio.createBiquadFilter(), g = audio.createGain();
   f.type = "bandpass"; f.frequency.value = 2400 + Math.random() * 900; f.Q.value = 1.4;
-  g.gain.value = Math.min(0.5, 0.08 + n * 0.015);
-  src.buffer = buf; src.connect(f).connect(g).connect(audio.destination); src.start();
+  g.gain.value = gain;
+  src.buffer = buf; src.connect(f).connect(g).connect(bus); src.start(t);
 }
+function click(n, vol = 1) {
+  if (!soundOn || !audio) return;
+  const t = audio.currentTime; if (t - lastClick < 0.028) return; lastClick = t;
+  flapNoise(t, Math.min(0.5, 0.08 + n * 0.015) * vol);
+}
+/* a run of flaps, for when the whole page turns over */
+function flaps(n = 6) {
+  if (!soundOn || !ear()) return;
+  const t = audio.currentTime;
+  for (let i = 0; i < n; i++) flapNoise(t + i * 0.034, 0.15 + 0.04 * (i % 2));
+}
+/* a display beep */
+function blip(f, v = 0.15, rond = 100, delay = 0, len = 0.07) {
+  if (!soundOn || !ear()) return;
+  const t0 = audio.currentTime + delay, g = audio.createGain(), k = clamp(rond, 0, 100) / 100;
+  [["sine", k], ["square", (1 - k) * 0.32]].forEach(([type, w]) => {
+    if (w < 0.01) return;
+    const o = audio.createOscillator(), og = audio.createGain();
+    o.type = type; o.frequency.value = f; og.gain.value = w;
+    o.connect(og).connect(g); o.start(t0); o.stop(t0 + len + 0.02);
+  });
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + 0.004);
+  g.gain.setValueAtTime(v, t0 + len * 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+  g.connect(bus);
+}
+function setSound(v, save) {
+  soundOn = v;
+  if (save) store.set("p1-sound", v ? "on" : "off");
+  // toggles keep their name ("音效", "Sound"); aria-pressed carries the state, the tooltip says what a click does
+  $("#sound").setAttribute("aria-pressed", String(v)); $("#sound").title = v ? "关闭音效" : "打开音效";
+  $("#b-sound").setAttribute("aria-pressed", String(v));
+}
+if (!(window.AudioContext || window.webkitAudioContext)) { soundOn = false; ["#sound", "#b-sound"].forEach((q) => { $(q).style.display = "none"; }); }
+/* a remembered "on" needs a gesture before the browser lets the page make sound */
+["pointerdown", "pointerup", "keydown"].forEach((t) => addEventListener(t, () => { if (soundOn) ear(); }, true));
 /* roll el's .ln lines to targets. onlyChanged: cells already showing their target stay still. */
 function roll(el, targets, o = {}) {
   const lines = $$(".ln", el);
@@ -704,12 +809,12 @@ function roll(el, targets, o = {}) {
     cells.push({ ln, row });
   });
   for (const j of flapJobs) if (j.el === el) flapJobs.delete(j);
-  flapJobs.add({ el, cells });
+  flapJobs.add({ el, cells, vol: o.vol ?? 1 });
   kick();
 }
 let flapRAF = 0;
 function flapFrame(now) {
-  flapRAF = 0; let changed = 0;
+  flapRAF = 0; let changed = 0, vol = 0;
   for (const job of flapJobs) {
     let done = true;
     for (const c of job.cells) {
@@ -720,14 +825,14 @@ function flapFrame(now) {
         let ch;
         if (k < 0) { ch = cell.from; done = false; }
         else if (k >= cell.seq.length) ch = cell.target;
-        else { ch = cell.seq[k]; done = false; if (cell.last !== k) { cell.last = k; changed++; } }
+        else { ch = cell.seq[k]; done = false; if (cell.last !== k) { cell.last = k; changed++; vol = Math.max(vol, job.vol); } }
         s += ch;
       }
       if (c.ln.textContent !== s) c.ln.textContent = s;
     }
     if (done) { job.cells.forEach((c) => { c.ln.textContent = c.ln.dataset.t; }); flapJobs.delete(job); }
   }
-  if (changed) click(changed);
+  if (changed) click(changed, vol);
   if (flapJobs.size) kick();
 }
 function kick() { if (!flapRAF) flapRAF = requestAnimationFrame(flapFrame); }
@@ -735,7 +840,7 @@ function kick() { if (!flapRAF) flapRAF = requestAnimationFrame(flapFrame); }
 /* ── hero: the lattice under a lens ───────────────────── */
 const hero = (() => {
   const cv = $("#hero"), ctx = cv.getContext("2d");
-  let W, H, P, cols, rows, ox, oy, words, wc, wr, lit, cells = [], t0 = 0, last = 0, idle = true, visible = true;
+  let W, H, P, cols, rows, ox, oy, words, wc, wr, lit, cells = [], t0 = 0, last = 0, idle = true, visible = true, key = "";
   const lens = { x: 0, y: 0, tx: 0, ty: 0, lastMove: -1e9 };
   let C = {};
   function colors() { C = { on: rgb(tok("--on")), off: rgb(tok("--off")), dim: rgb(tok("--dim")), bg: tok("--bg"), onS: tok("--on") }; }
@@ -748,8 +853,8 @@ const hero = (() => {
     cols = Math.floor(W / P) + 2; rows = Math.floor(H / P) + 2;
     ox = (W - (cols - 1) * P) / 2; oy = (H - (rows - 1) * P) / 2;
     wc = Math.round((cols - ww) / 2); wr = Math.round(rows * 0.45 - wh / 2);
-    if (!cells.length || cells.length !== words.join("").length) startRoll(true);
-    lens.x = lens.tx = W * 0.62; lens.y = lens.ty = H * 0.45;
+    if (words.join("|") !== key) { key = words.join("|"); startRoll(true); }
+    if (!lens.placed) { lens.x = lens.tx = W * 0.62; lens.y = lens.ty = H * 0.45; lens.placed = true; }
   }
   function startRoll(first) {
     const now = performance.now(); cells = [];
@@ -763,8 +868,10 @@ const hero = (() => {
   }
   function buildLit(now) {
     lit = new Uint8Array(cols * rows);
+    let flipped = 0;
     for (const c of cells) {
       const k = Math.floor((now - c.start) / 46);
+      if (k >= 0 && k < c.seq.length && c.last !== k) { c.last = k; flipped++; }
       const ch = k < 0 ? " " : k >= c.seq.length ? c.target : c.seq[k];
       const bm = BITMAPS[ch] || BITMAPS[" "];
       const bx = wc + c.i * 6, by = wr + c.li * 10;
@@ -772,11 +879,12 @@ const hero = (() => {
         const cx = bx + x, cy = by + y; if (cx >= 0 && cx < cols && cy >= 0 && cy < rows) lit[cy * cols + cx] = 1;
       }
     }
+    if (flipped) click(flipped);
   }
   function frame(now) {
     requestAnimationFrame(frame);
     if (!visible || now - last < 15) return; last = now;
-    if (now - lens.lastMove > 2600) {
+    if (!reduce && now - lens.lastMove > 2600) {
       const t = now * 0.001;
       lens.tx = W * (0.5 + 0.34 * Math.sin(t * 0.27)); lens.ty = H * (0.46 + 0.2 * Math.sin(t * 0.41 + 1.3));
     }
@@ -809,7 +917,12 @@ const hero = (() => {
     const txt = `Lens <b>x ${String(clamp(lc, 0, 99)).padStart(2, "0")} y ${String(clamp(lr, 0, 99)).padStart(2, "0")}</b> · wght <b>600→900</b> · ROND <b>100→0</b>`;
     if (ro.dataset.v !== txt) { ro.innerHTML = txt; ro.dataset.v = txt; }
   }
-  cv.addEventListener("pointermove", (e) => { const b = cv.getBoundingClientRect(); lens.tx = e.clientX - b.left; lens.ty = e.clientY - b.top; lens.lastMove = performance.now(); });
+  let lensCell = -1;
+  cv.addEventListener("pointermove", (e) => {
+    const b = cv.getBoundingClientRect(); lens.tx = e.clientX - b.left; lens.ty = e.clientY - b.top; lens.lastMove = performance.now();
+    const cell = Math.floor(lens.tx / P) * 1000 + Math.floor(lens.ty / P);
+    if (e.pointerType === "mouse" && cell !== lensCell) { lensCell = cell; click(1, 0.5); }
+  });
   cv.addEventListener("click", () => startRoll(false));
   new IntersectionObserver((es) => { visible = es[0].isIntersecting; }).observe(cv);
   colors(); layout(); requestAnimationFrame(frame);
@@ -832,7 +945,7 @@ const hero = (() => {
   let prev = "";
   function tick() {
     const d = new Date(), s = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-    if (s !== prev) { roll(el, [s], { onlyChanged: true, min: 3, max: 5, stagger: 0, tick: 34 }); prev = s; }
+    if (s !== prev) { roll(el, [s], { onlyChanged: true, min: 3, max: 5, stagger: 0, tick: 34, vol: 0.3 }); prev = s; }
   }
   tick(); setInterval(tick, 250);
 })();
@@ -852,7 +965,8 @@ function drawMetrics() {
 /* ── axes: the design space as a field of dots ───────────────────── */
 const axes = (() => {
   const cv = $("#pad"), ctx = cv.getContext("2d"), word = $("#ax-word");
-  let w = 400, r = 100, drag = false, C = {}, tw = 400, tr = 100, anim = 0;
+  let w = 400, r = 100, drag = false, C = {}, tw = 400, tr = 100, anim = 0, cell = -1;
+  const beep = limiter(24);
   const NX = 9, NY = 6;
   const names = { 100: "Thin", 200: "ExtraLight", 300: "Light", 400: "Regular", 500: "Medium", 600: "SemiBold", 700: "Bold", 800: "ExtraBold", 900: "Black" };
   function draw() {
@@ -881,6 +995,8 @@ const axes = (() => {
     const wn = names[Math.round(w)], rn = Math.round(r);
     $("#ax-name").innerHTML = `Style <b>${wn && (rn === 100 || rn === 0) ? (rn === 0 ? (wn === "Regular" ? "Pixel" : "Pixel " + wn) : wn) : "Custom"}</b>`;
     $$("#ax-chips .chip").forEach((c) => c.setAttribute("aria-pressed", String(+c.dataset.w === Math.round(w) && +c.dataset.r === rn)));
+    const i = Math.round((w - 100) / 100), j = Math.round((100 - r) / 20);
+    if (i * 10 + j !== cell) { if (cell >= 0 && beep()) blip(hz(i + 2), 0.13, 100 - j * 20, 0, 0.05); cell = i * 10 + j; }
     draw();
   }
   function to(nw, nr, animate) {
@@ -899,10 +1015,10 @@ const axes = (() => {
   }
   cv.addEventListener("pointerdown", (e) => { drag = true; cv.setPointerCapture(e.pointerId); fromPointer(e); });
   cv.addEventListener("pointermove", (e) => { if (drag) fromPointer(e); });
-  cv.addEventListener("pointerup", () => { drag = false; });
+  ["pointerup", "pointercancel", "lostpointercapture"].forEach((t) => cv.addEventListener(t, () => { drag = false; }));
   cv.addEventListener("keydown", (e) => {
     const m = { ArrowLeft: [-50, 0], ArrowRight: [50, 0], ArrowUp: [0, 10], ArrowDown: [0, -10] }[e.key];
-    if (m) { e.preventDefault(); to(Math.round(w) + m[0], Math.round(r) + m[1], false); }
+    if (m) { e.preventDefault(); to(Math.round(w) + m[0], Math.round(r) + m[1], false); $("#pad-sr").textContent = `${$("#ax-name").textContent} · wght ${Math.round(w)} · ROND ${Math.round(r)}`; }
   });
   $$("#ax-chips .chip").forEach((c) => c.addEventListener("click", () => to(+c.dataset.w, +c.dataset.r, true)));
   return { paint: apply, draw };
@@ -953,21 +1069,30 @@ const insp = (() => {
   return { show, draw };
 })();
 (function () {
-  const box = $("#gset");
-  Object.keys(BITMAPS).filter((c) => c !== " " && c !== " ").forEach((c) => {
+  const box = $("#gset"), ORDER = ["Uppercase", "Lowercase", "Figure", "Signage", "Punctuation"];
+  Object.keys(BITMAPS).filter((c) => c !== " " && c !== " ").sort((a, b) => ORDER.indexOf(setOf(a)) - ORDER.indexOf(setOf(b))).forEach((c) => {
     const b = document.createElement("button"); b.type = "button"; b.textContent = c; b.dataset.ch = c;
-    b.setAttribute("aria-label", "U+" + c.codePointAt(0).toString(16).toUpperCase().padStart(4, "0"));
-    b.setAttribute("aria-pressed", String(c === "g"));
-    const pick = () => { $$("#gset [aria-pressed=true]").forEach((x) => x.setAttribute("aria-pressed", "false")); b.setAttribute("aria-pressed", "true"); insp.show(c); };
+    b.setAttribute("aria-label", `${c} U+${c.codePointAt(0).toString(16).toUpperCase().padStart(4, "0")}`);
+    b.setAttribute("aria-pressed", String(c === "g")); b.tabIndex = c === "g" ? 0 : -1;
+    const pick = () => { $$("#gset button").forEach((x) => { x.setAttribute("aria-pressed", String(x === b)); x.tabIndex = x === b ? 0 : -1; }); insp.show(c); };
     b.addEventListener("click", pick); b.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") insp.show(c); });
     box.appendChild(b);
   });
   box.addEventListener("pointerleave", () => { const sel = $("#gset [aria-pressed=true]"); if (sel) insp.show(sel.dataset.ch); });
+  box.addEventListener("keydown", (e) => {
+    const vis = $$("#gset button:not([hidden])"), i = vis.indexOf(document.activeElement); if (i < 0) return;
+    const cols = vis.filter((b) => b.offsetTop === vis[0].offsetTop).length;
+    const j = { ArrowRight: i + 1, ArrowLeft: i - 1, ArrowDown: i + cols, ArrowUp: i - cols, Home: 0, End: vis.length - 1 }[e.key];
+    if (j === undefined) return;
+    e.preventDefault(); const b = vis[clamp(j, 0, vis.length - 1)]; b.click(); b.focus();
+  });
   $$("#g-filter .chip").forEach((c) => c.addEventListener("click", () => {
     $$("#g-filter .chip").forEach((x) => x.setAttribute("aria-pressed", String(x === c)));
     const f = c.dataset.f; let n = 0;
     $$("#gset button").forEach((b) => { b.hidden = !(f === "all" || SETS[f](b.dataset.ch)); n += !b.hidden; });
     $("#g-count").textContent = `${n} shown`;
+    const vis = $$("#gset button:not([hidden])");   // keep one tab stop in the visible set
+    if (vis.length && !vis.some((b) => b.tabIndex === 0)) { $$("#gset button").forEach((b) => { b.tabIndex = -1; }); vis[0].tabIndex = 0; }
   }));
 })();
 
@@ -985,8 +1110,8 @@ const board = (() => {
     });
     if (mode === "dep") {
       const base = now.getHours() * 60 + now.getMinutes() + 4, p = (n) => String(n).padStart(2, "0");
-      const rows = [["ZURICH HB", "7"], ["BERN", "12"], ["GENEVE AIRPORT", "4"], ["BASEL SBB", "9"], ["LUGANO", "14"]];
-      return [pad("TIME  TO           PL"), ...rows.map(([d, pl], i) => { const m = (base + i * 11) % 1440; const l = `${p((m / 60) | 0)}:${p(m % 60)} ${d}`; return l + " ".repeat(Math.max(1, N - l.length - pl.length)) + pl; })].map(pad);
+      const rows = [["ZURICH HB", "7"], ["BERN", "12"], ["GENEVE AERO", "4"], ["BASEL SBB", "9"], ["LUGANO", "14"]];
+      return [pad("TIME  TO          PL"), ...rows.map(([d, pl], i) => { const m = (base + i * 11) % 1440; const l = `${p((m / 60) | 0)}:${p(m % 60)} ${d.slice(0, N - 7 - pl.length)}`; return l + " ".repeat(Math.max(1, N - l.length - pl.length)) + pl; })].map(pad);
     }
     const words = (msg || "TYPE A MESSAGE BELOW").split(/\s+/), out = [];
     let line = "";
@@ -1007,17 +1132,17 @@ const board = (() => {
   setTimeout(() => { if (!seen) { $$(".ln", face).forEach((l, i) => { l.textContent = lines()[i]; }); } }, 0);
   setInterval(() => { const m = new Date().getMinutes(); if (m !== lastMin) { if (lastMin !== -1 && mode !== "msg") show(false); lastMin = m; } }, 1000);
   $("#boardbox").addEventListener("click", () => show(true));
+  $("#boardbox").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); show(true); } });
   $$("#b-modes .chip[data-m]").forEach((c) => c.addEventListener("click", () => {
     $$("#b-modes .chip[data-m]").forEach((x) => x.setAttribute("aria-pressed", String(x === c)));
     mode = c.dataset.m; show(true);
   }));
   $("#board-msg").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { msg = e.target.value.trim(); mode = "msg"; $$("#b-modes .chip[data-m]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.m === "msg"))); show(true); }
+    if (e.key === "Enter") { msg = [...e.target.value.trim()].map((c) => (BITMAPS[c] ? c : BITMAPS[c.toUpperCase()] ? c.toUpperCase() : "?")).join(""); mode = "msg"; $$("#b-modes .chip[data-m]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.m === "msg"))); show(true); }
   });
-  $("#b-sound").addEventListener("click", (e) => {
-    soundOn = !soundOn; e.currentTarget.setAttribute("aria-pressed", String(soundOn)); e.currentTarget.textContent = soundOn ? "Sound on" : "Sound off";
-    if (soundOn && !audio) { try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (err) { soundOn = false; } }
-    if (soundOn) { audio.resume?.(); show(true); }
+  $("#b-sound").addEventListener("click", () => {
+    setSound(!soundOn, true);
+    if (soundOn && ear()) show(true);
   });
   return { size };
 })();
@@ -1035,12 +1160,13 @@ const tester = (() => {
     paint();
   }
   [tw, tr, ts].forEach((el) => el.addEventListener("input", apply));
-  latBtn.addEventListener("click", () => { latOn = !latOn; latBtn.setAttribute("aria-pressed", String(latOn)); latBtn.textContent = latOn ? "Lattice on" : "Lattice off"; paint(); });
+  latBtn.addEventListener("click", () => { latOn = !latOn; latBtn.setAttribute("aria-pressed", String(latOn)); paint(); });
   $$("#t-samples .chip").forEach((c) => c.addEventListener("click", () => { a.value = c.dataset.s; }));
   $("#t-copy").addEventListener("click", () => {
     const m = $("#t-msg"), text = `font-family: "Punctum";\nline-height: 1;\n${$("#t-css").textContent}`;
-    const fb = () => { const s = getSelection(), rg = document.createRange(); rg.selectNodeContents($("#t-css")); s.removeAllRanges(); s.addRange(rg); m.textContent = "Selected · press ⌘C"; };
-    try { navigator.clipboard.writeText(text).then(() => { m.textContent = "Copied"; }, fb); } catch (e) { fb(); }
+    const say = (t) => { m.textContent = t; clearTimeout(m.t); m.t = setTimeout(() => { m.textContent = ""; }, 2600); };
+    const fb = () => { const s = getSelection(), rg = document.createRange(); rg.selectNodeContents($("#t-css")); s.removeAllRanges(); s.addRange(rg); say(`Selected · press ${/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘C" : "Ctrl+C"}`); };
+    try { navigator.clipboard.writeText(text).then(() => say("Copied"), fb); } catch (e) { fb(); }
   });
   if (innerWidth < 560) ts.value = 40;
   apply();
@@ -1060,22 +1186,83 @@ const tester = (() => {
 
 /* ── nav scrollspy ───────────────────── */
 (function () {
-  const links = $$(".nav ul a"), map = new Map(links.map((a) => [a.getAttribute("href").slice(1), a]));
-  const ids = ["idea", "system", "axes", "glyphs", "board", "tester", "use", "info"];
+  const links = $$(".nav ul a[href^='#']"), map = new Map(links.map((a) => [a.getAttribute("href").slice(1), a])), ul = $(".nav ul");
   const io = new IntersectionObserver((es) => es.forEach((e) => {
-    if (e.isIntersecting) { links.forEach((a) => a.setAttribute("aria-current", "false")); map.get(e.target.id)?.setAttribute("aria-current", "true"); }
+    if (!e.isIntersecting) return;
+    links.forEach((a) => a.removeAttribute("aria-current"));
+    const a = map.get(e.target.id); if (!a) return;
+    a.setAttribute("aria-current", "location");
+    if (ul.scrollWidth > ul.clientWidth) { const r = a.getBoundingClientRect(), u = ul.getBoundingClientRect(); ul.scrollBy({ left: r.left + r.width / 2 - (u.left + u.width / 2), behavior: reduce ? "auto" : "smooth" }); }
   }), { rootMargin: "-45% 0px -50% 0px" });
-  ids.forEach((id) => { const s = document.getElementById(id); if (s) io.observe(s); });
+  map.forEach((a, id) => { const s = document.getElementById(id); if (s) io.observe(s); });
+})();
+
+/* ── theme & sound switches ───────────────────── */
+(function () {
+  const root = document.documentElement, meta = $('meta[name="theme-color"]'), tb = $("#theme");
+  // dark unless the visitor picked light (p1-theme); the <head> script sets it before first paint
+  function setTheme(t, save) {
+    if (root.getAttribute("data-theme") !== t) root.setAttribute("data-theme", t);
+    if (save) store.set("p1-theme", t);
+    if (meta) meta.setAttribute("content", getComputedStyle(document.body).backgroundColor);
+    const label = t === "dark" ? "切换到浅色" : "切换到深色";
+    tb.setAttribute("aria-label", label); tb.title = label;
+  }
+  setTheme(root.getAttribute("data-theme") === "light" ? "light" : "dark", false);
+  tb.addEventListener("click", () => { setTheme(root.getAttribute("data-theme") === "light" ? "dark" : "light", true); flaps(6); });
+
+  setSound(soundOn, false);
+  $("#sound").addEventListener("click", () => {
+    setSound(!soundOn, true);
+    if (soundOn) { blip(hz(5), 0.15, 0); blip(hz(7), 0.15, 50, 0.07); blip(hz(9), 0.17, 100, 0.14, 0.18); }   // pixel → dot
+  });
+
+  // a glyph prints like a dot-matrix head: column by column, each lit dot a pin, higher rows higher
+  function printGlyph(ch) {
+    const bm = BITMAPS[ch]; if (!bm || !ear()) return;
+    for (let c = 0; c < 5; c++) {
+      const pins = bm.map((row, r) => (row[c] === "#" ? r : -1)).filter((r) => r >= 0);
+      pins.forEach((r) => blip(hz(10 - r), 0.06, 0, c * 0.038, 0.03));
+      if (pins.length) flapNoise(audio.currentTime + c * 0.038, 0.05);
+    }
+  }
+  document.addEventListener("click", (e) => {
+    if (!soundOn) return;
+    const el = e.target.closest("a, button");
+    if (!el || el.matches("#theme, #sound, #b-sound") || el.closest("#ax-chips")) return;   // these sound on their own
+    if (el.closest(".nav ul")) return blip(hz($$(".nav ul a").indexOf(el)), 0.14);
+    if (el.closest("#gset")) return printGlyph(el.dataset.ch);
+    if (el.id === "t-copy") { blip(hz(10), 0.14, 0, 0, 0.05); return blip(hz(12), 0.14, 0, 0.08, 0.09); }
+    if (el.matches(".chip")) {
+      const group = $$(".chip", el.parentElement);
+      return blip(hz(3 + group.indexOf(el)), 0.14, +$("#t-r").value);
+    }
+    click(5);
+  }, true);
+
+  // sliders beep as they pass each 1/14 of their range, in the tester's current ROND
+  const steps = new WeakMap(), tickRange = limiter(26);
+  document.addEventListener("input", (e) => {
+    const r = e.target;
+    if (!soundOn || r.type !== "range") return;
+    const lo = +r.min || 0, hi = +r.max || 100, k = Math.round(((+r.value - lo) / (hi - lo || 1)) * 14);
+    if (steps.get(r) === k) return;
+    steps.set(r, k);
+    if (tickRange()) blip(hz(k), 0.11, +$("#t-r").value, 0, 0.045);
+  });
 })();
 
 /* ── boot & theme ───────────────────── */
 function relayout() { fitAll(); drawMetrics(); board.size(); hero.layout(); paintLattices(); insp.draw(); }
 function retheme() { hero.colors(); paintLattices(); insp.draw(); }
-let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(relayout, 120); });
+let rz, lastSize = "";
+const sizeKey = () => innerWidth + "x" + $("#hero").clientHeight;
+addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (sizeKey() === lastSize) return; lastSize = sizeKey(); relayout(); }, 120); });
 matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", retheme);
 new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 fitAll(); drawMetrics(); paintLattices(); insp.show("g");
-document.fonts.ready.then(() => { relayout(); });
+document.fonts.ready.then(() => { lastSize = sizeKey(); relayout(); });
+let fz; document.fonts.addEventListener?.("loadingdone", () => { clearTimeout(fz); fz = setTimeout(relayout, 60); });   // web fonts arriving after first paint
 </script>
 
 </body>
